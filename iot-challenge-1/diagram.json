@@ -1,7 +1,39 @@
 {
   "version": 1,
-  "author": "Anonymous maker",
+  "author": "Simone Amighini",
   "editor": "wokwi",
-  "parts": [ { "id": "esp", "type": "board-esp32-devkit-c-v4" } ],
-  "connections": [ [ "esp:TX", "$serialMonitor:RX", "" ], [ "esp:RX", "$serialMonitor:TX", "" ] ]
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir",
+      "top": 4,
+      "left": -132.18,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": 22.4,
+      "left": 125.6,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "pir:GND", "black", [ "h-81.41", "v-57.6" ] ],
+    [ "esp:D2", "pir:OUT", "green", [ "h-91.01", "v-76.8" ] ],
+    [ "ldr1:GND", "esp:GND.2", "black", [ "h38.4", "v-38.8", "h-220.8", "v19.2" ] ],
+    [ "ldr1:VCC", "esp:32", "red", [ "h19.2", "v-48", "h-336", "v96" ] ],
+    [ "pir:VCC", "esp:33", "red", [ "v9.6", "h-48", "v-115.2", "h115.2", "v86.4" ] ],
+    [ "ldr1:AO", "esp:35", "green", [ "h48", "v-96.7", "h-355.2", "v105.6" ] ]
+  ],
+  "dependencies": {}
 }

@@ -1,0 +1,6 @@
+.pio
+.vscode
+.venv
+simulation_log.txt
+timing_log.csv
+energy_report.txt
