@@ -1,0 +1,1044 @@
+[
+    {
+        "id": "41bacab9b8390764",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d40cd8b4758ff01e",
+        "type": "debug",
+        "z": "41bacab9b8390764",
+        "name": "Print 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1410,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "6099f5c681ac2833",
+        "type": "inject",
+        "z": "41bacab9b8390764",
+        "name": "Generate message\\n (delay: 1 s) (interval: 1 s)",
+        "props": [
+            {
+                "p": "id",
+                "v": "$floor($random()*30000)",
+                "vt": "jsonata"
+            },
+            {
+                "p": "timestamp",
+                "v": "",
+                "vt": "date"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "x": 370,
+        "y": 340,
+        "wires": [
+            [
+                "c2b7a61e7648f849"
+            ]
+        ]
+    },
+    {
+        "id": "ddf6dc54cf19a622",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Generate payload",
+        "func": "msg.payload = \"{\" + \n    \"\\\"id\\\":\" + msg.id + \", \" +\n    \"\\\"timestamp\\\":\" + msg.timestamp +\n\"}\";\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1110,
+        "y": 280,
+        "wires": [
+            [
+                "d40cd8b4758ff01e",
+                "921ae34658f3f5d9"
+            ]
+        ]
+    },
+    {
+        "id": "5304984e51e20876",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Generate CSV row",
+        "func": "let counter = context.get(\"counter\");\n\nmsg.counter = counter;\n\nmsg.payload =\n    counter + \",\" +\n    msg.id + \",\" +\n    msg.timestamp;\n\ncontext.set(\"counter\", counter + 1);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "context.set(\"counter\", 1);",
+        "finalize": "",
+        "libs": [],
+        "x": 1110,
+        "y": 420,
+        "wires": [
+            [
+                "72328d99e619e20f"
+            ]
+        ]
+    },
+    {
+        "id": "72328d99e619e20f",
+        "type": "file",
+        "z": "41bacab9b8390764",
+        "name": "Append to id_log.csv",
+        "filename": "id_log.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1460,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "921ae34658f3f5d9",
+        "type": "mqtt out",
+        "z": "41bacab9b8390764",
+        "name": "MQTT publish (topic: challenge3/id_generator)",
+        "topic": "challenge3/id_generator",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e598350381174267",
+        "x": 1540,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "afdc7bcb74ed4522",
+        "type": "file",
+        "z": "41bacab9b8390764",
+        "name": "Overwrite id_log.csv",
+        "filename": "id_log.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 780,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "23993175cfc4cf37",
+        "type": "inject",
+        "z": "41bacab9b8390764",
+        "name": "Generate csv header for id_log.csv at startup",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "0",
+        "topic": "",
+        "payload": "No.,ID,TIMESTAMP",
+        "payloadType": "str",
+        "x": 430,
+        "y": 120,
+        "wires": [
+            [
+                "afdc7bcb74ed4522"
+            ]
+        ]
+    },
+    {
+        "id": "c5b0d026339b5fdc",
+        "type": "mqtt in",
+        "z": "41bacab9b8390764",
+        "name": "MQTT subscribe (topic: challenge3/id_generator)",
+        "topic": "challenge3/id_generator",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "e598350381174267",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 440,
+        "y": 860,
+        "wires": [
+            [
+                "76170ffa8b460ffa"
+            ]
+        ]
+    },
+    {
+        "id": "76170ffa8b460ffa",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Store message id, calculate N, count messages",
+        "func": "flow.set(\"filteredMid\", msg.payload.id);\nflow.set(\"N\", msg.payload.id % 5218);\n\nlet receivedMessages = global.get(\"receivedMessages\") + 1;\nglobal.set(\"receivedMessages\", receivedMessages);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "global.set(\"receivedMessages\", 0);",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 860,
+        "wires": [
+            [
+                "10d38a4b37527b78"
+            ]
+        ]
+    },
+    {
+        "id": "dccd31b86b5b9da1",
+        "type": "csv",
+        "z": "41bacab9b8390764",
+        "name": "Parse challenge3.csv",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": false,
+        "hdrout": "none",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "Packet_Number,Device_Name_Source,Device_Type_Source,Source_Address,Destination_Address,Device_Name_Destination,Device_Type_ Destination,Source_Address_ZigBee,Device_Name_ZigBee_Source,Device_Type_ZigBee_Source,Destination_Address_ZigBee,Device_Name_ZigBee_Destination,Device_Type_ZigBee_Destination,Human_Command,Human_Command_Origin,Packet_Type,Command_String",
+        "skip": "1",
+        "strings": true,
+        "include_empty_strings": true,
+        "include_null_values": true,
+        "x": 1120,
+        "y": 740,
+        "wires": [
+            [
+                "9e382e722c26dbeb"
+            ]
+        ]
+    },
+    {
+        "id": "8c9f7871818d711e",
+        "type": "inject",
+        "z": "41bacab9b8390764",
+        "name": "Trigger CSV parsing at startup",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "0",
+        "topic": "",
+        "x": 390,
+        "y": 740,
+        "wires": [
+            [
+                "0a37c165cc65433a"
+            ]
+        ]
+    },
+    {
+        "id": "9e382e722c26dbeb",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Store parsed CSV into a global variable",
+        "func": "global.set(\"challenge3.csv\", msg.payload);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1440,
+        "y": 740,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0a37c165cc65433a",
+        "type": "file in",
+        "z": "41bacab9b8390764",
+        "name": "Read challenge3.csv",
+        "filename": "challenge3.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 780,
+        "y": 740,
+        "wires": [
+            [
+                "dccd31b86b5b9da1"
+            ]
+        ]
+    },
+    {
+        "id": "31665e4f6b131ce2",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Find Nth packet in challenge3.csv",
+        "func": "const csvData = global.get(\"challenge3.csv\");\n\nflow.set(\n    \"filteredRow\",\n    csvData.find(\n        row => row.Packet_Number == flow.get(\"N\")\n    )\n);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1420,
+        "y": 860,
+        "wires": [
+            [
+                "30fba926952174f8"
+            ]
+        ]
+    },
+    {
+        "id": "a647df10b71e9ac2",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Filter for ZBEE_ZCL",
+        "func": "const filteredRow = flow.get(\"filteredRow\");\n\nif (String(filteredRow.Command_String).includes(\"Layer ZBEE_ZCL\")) {\n    return msg;\n} else {\n    // stop the flow\n    return;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 940,
+        "wires": [
+            [
+                "3000562151dfe34a"
+            ]
+        ]
+    },
+    {
+        "id": "89a552f89baee222",
+        "type": "mqtt out",
+        "z": "41bacab9b8390764",
+        "name": "MQTT publish",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "e598350381174267",
+        "x": 1620,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "3000562151dfe34a",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Prepare new MQTT message",
+        "func": "const filteredRow = flow.get(\"filteredRow\");\n\nmsg.topic = filteredRow.Device_Name_ZigBee_Source.replace(/[\\s+]/g, '');\n\nconst currentTimestamp = Date.now();\nconst subId = flow.get(\"filteredMid\");\nconst srcAddr = \"0x\" + filteredRow.Source_Address.toString(16);\nconst dstAddr = \"0x\" + filteredRow.Destination_Address.toString(16);\nconst zbSrcAddr = \"0x\" + filteredRow.Source_Address_ZigBee.toString(16);\nconst zbDstAddr = \"0x\" + filteredRow.Destination_Address_ZigBee.toString(16);\nconst zbSrcDevName = filteredRow.Device_Name_ZigBee_Source;\nconst cmdStr = filteredRow.Command_String;\n\nmsg.payload = \"{\" +\n    \"\\\"timestamp\\\": \" + currentTimestamp           + \",\"   +\n    \"\\\"id\\\": \"        + subId                      + \",\"   +\n    \"\\\"wpan.src\\\": \"  + \"\\\"\" + srcAddr             + \"\\\",\" +\n    \"\\\"wpan.dst\\\": \"  + \"\\\"\" + dstAddr             + \"\\\",\" +\n    \"\\\"zbee.src\\\": \"  + \"\\\"\" + zbSrcAddr           + \"\\\",\" +\n    \"\\\"zbee.dst\\\": \"  + \"\\\"\" + zbDstAddr           + \"\\\",\" +\n    \"\\\"topic\\\": \"     + \"\\\"ZigBee/\" + zbSrcDevName + \"\\\",\" +\n    \"\\\"payload\\\": \"   + cmdStr                             +\n\"}\";\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1060,
+        "y": 940,
+        "wires": [
+            [
+                "325c13b41d01c3c0"
+            ]
+        ]
+    },
+    {
+        "id": "10d38a4b37527b78",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Reset message",
+        "func": "return {};",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 860,
+        "wires": [
+            [
+                "31665e4f6b131ce2"
+            ]
+        ]
+    },
+    {
+        "id": "325c13b41d01c3c0",
+        "type": "delay",
+        "z": "41bacab9b8390764",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "10",
+        "nbRateUnits": "1",
+        "rateUnits": "minute",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1360,
+        "y": 940,
+        "wires": [
+            [
+                "89a552f89baee222",
+                "e1e59de806260c65",
+                "02cf57870e33b133"
+            ]
+        ]
+    },
+    {
+        "id": "e1e59de806260c65",
+        "type": "debug",
+        "z": "41bacab9b8390764",
+        "name": "Print 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1590,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "02cf57870e33b133",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Generate CSV rows",
+        "func": "const commandString = JSON.parse(msg.payload.replace(/'/g, '\"')).payload;\n\nconst targetAttributes = [\"Active Power (0x050b)\", \"RMS Current (0x0508)\", \"RMS Voltage (0x0505)\"];\nlet hasTargetAttribute = false;\nfor(let i = 0; i < targetAttributes.length; i++) {\n    if(Object.hasOwn(commandString, \"Attribute\")) {\n        if(targetAttributes.includes(commandString.Attribute[i])) {\n            hasTargetAttribute = true;\n            break;\n        }\n    }\n}\nif (!hasTargetAttribute) {\n    // stop the flow\n    return;\n}\n\nlet signedCounter = 0;\nlet unsignedCounter = 0;\nlet csvContent = \"\";\ntry {\n    for (let i = 0; i < commandString.Attribute.length; i++) {\n        const attribute = commandString.Attribute[i];\n        const status = commandString.Status[i];\n        const dataType = commandString[\"Data Type\"][i];\n\n        let value;\n        if (dataType.includes(\"16-Bit Signed Integer\")) {\n            value = commandString?.Int16?.[signedCounter] ?? 0;\n            signedCounter++;\n        } else if (dataType.includes(\"16-Bit Unsigned Integer\")) {\n            value = commandString?.Uint16?.[unsignedCounter] ?? 0;\n            unsignedCounter++;\n        } else {\n            value = 0;\n        }\n\n        let counter = context.get(\"counter\");\n        let timestamp = Date.now();\n        let sequenceNumber = commandString[\"Sequence Number\"];\n        csvContent += `${counter},${timestamp},${sequenceNumber},${attribute},${status},${dataType},${value}\\n`;\n        context.set(\"counter\", counter + 1);\n    }\n} catch(error) {\n    node.warn(\"MALFORMED COMMAND: MESSAGE DISCARDED\");\n    return;\n}\n\nreturn {\n    payload: csvContent.replace(/\"/g, '').replace(/\\s\\(0x[0-9A-Fa-f]+\\)/g, '')\n};",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "context.set(\"counter\", 1);",
+        "finalize": "",
+        "libs": [],
+        "x": 1640,
+        "y": 1060,
+        "wires": [
+            [
+                "103952d408f2aa78",
+                "feeb29b0f8d9bfd9"
+            ]
+        ]
+    },
+    {
+        "id": "4414080a169956c0",
+        "type": "inject",
+        "z": "41bacab9b8390764",
+        "name": "Generate csv header for filtered_elems.csv at startup",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "0",
+        "topic": "",
+        "payload": "No.,Timestamp,Sequence Number,Attribute,Status,Data Type,Data Value",
+        "payloadType": "str",
+        "x": 460,
+        "y": 800,
+        "wires": [
+            [
+                "e47268e8068b7895"
+            ]
+        ]
+    },
+    {
+        "id": "e47268e8068b7895",
+        "type": "file",
+        "z": "41bacab9b8390764",
+        "name": "Overwrite filtered_elems.csv",
+        "filename": "filtered_elems.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 800,
+        "y": 800,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "103952d408f2aa78",
+        "type": "file",
+        "z": "41bacab9b8390764",
+        "name": "Append to filtered_elems.csv",
+        "filename": "filtered_elems.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 2020,
+        "y": 1060,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "166961f175eb9478",
+        "type": "switch",
+        "z": "41bacab9b8390764",
+        "name": "Switch on attribute",
+        "property": "payload.attribute",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "RMS Voltage",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "RMS Current",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 2290,
+        "y": 1220,
+        "wires": [
+            [
+                "081ff327d84ef467"
+            ],
+            [
+                "b8918964288e1349"
+            ]
+        ]
+    },
+    {
+        "id": "30fba926952174f8",
+        "type": "switch",
+        "z": "41bacab9b8390764",
+        "name": "",
+        "property": "filteredRow.Packet_Type",
+        "propertyType": "flow",
+        "rules": [
+            {
+                "t": "else"
+            },
+            {
+                "t": "eq",
+                "v": "Link Status (0x08)",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 570,
+        "y": 940,
+        "wires": [
+            [
+                "a647df10b71e9ac2"
+            ],
+            [
+                "bed4aaad56d6b087"
+            ]
+        ]
+    },
+    {
+        "id": "bed4aaad56d6b087",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Update link costs",
+        "func": "const filteredRow = flow.get(\"filteredRow\");\n\nconst zbSrcAddr = \"0x\" + filteredRow.Source_Address_ZigBee.toString(16);\nconst cmdStr = JSON.parse(filteredRow.Command_String.replace(/'/g, '\"'));\n\nlet linkMap = flow.get(\"linkMap\");\ncmdStr.Links.forEach(link => {\n    const destAddr = link.Address;\n    const cost = link['Outgoing Cost'];\n    const existingIndex = linkMap.findIndex(tuple => \n        tuple[0] === zbSrcAddr && tuple[1] === destAddr\n    );\n    if (existingIndex !== -1) {\n        linkMap[existingIndex][2] = cost;\n    } else {\n        linkMap.push([zbSrcAddr, destAddr, cost]);\n    }\n});\n\nflow.set(\"linkMap\", linkMap);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "flow.set(\"linkMap\", []);",
+        "finalize": "",
+        "libs": [],
+        "x": 770,
+        "y": 1420,
+        "wires": [
+            [
+                "3496654d4f01f186"
+            ]
+        ]
+    },
+    {
+        "id": "3c7fbad06b307f4f",
+        "type": "file",
+        "z": "41bacab9b8390764",
+        "name": "Write to outgoing_cost.csv",
+        "filename": "outgoing_cost.csv",
+        "filenameType": "str",
+        "appendNewline": false,
+        "createDir": false,
+        "overwriteFile": "true",
+        "encoding": "none",
+        "x": 1660,
+        "y": 1420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8772482e00d59c03",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Prepare CSV content",
+        "func": "const linkMap = flow.get(\"linkMap\");\nconst header = \"No.,Source,Destination,Cost\";\nconst csvRows = linkMap.map((tuple, index) => {\n    const no = index + 1;\n    const source = tuple[0];\n    const destination = tuple[1];\n    const cost = tuple[2];\n\n    return `${no},${source},${destination},${cost}`;\n});\n\nreturn {\n    payload: [header, ...csvRows].join(\"\\n\")\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1360,
+        "y": 1420,
+        "wires": [
+            [
+                "3c7fbad06b307f4f"
+            ]
+        ]
+    },
+    {
+        "id": "c2b7a61e7648f849",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Limit to 200 messages",
+        "func": "let messageCounter = context.get(\"messageCounter\") + 1;\n\nif(messageCounter <= 200) {\n    context.set(\"messageCounter\", messageCounter);\n    return msg;\n} else {\n    // stop the flow\n    return;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "context.set(\"messageCounter\", 0);",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 340,
+        "wires": [
+            [
+                "ddf6dc54cf19a622",
+                "5304984e51e20876"
+            ]
+        ]
+    },
+    {
+        "id": "3496654d4f01f186",
+        "type": "switch",
+        "z": "41bacab9b8390764",
+        "name": "Only at 200th message",
+        "property": "receivedMessages",
+        "propertyType": "global",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "200",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 1420,
+        "wires": [
+            [
+                "8772482e00d59c03",
+                "fb536459c61f1fd2"
+            ]
+        ]
+    },
+    {
+        "id": "6b7800266d99466b",
+        "type": "complete",
+        "z": "41bacab9b8390764",
+        "name": "Check end of execution",
+        "scope": [
+            "a647df10b71e9ac2",
+            "bed4aaad56d6b087"
+        ],
+        "uncaught": false,
+        "x": 780,
+        "y": 1540,
+        "wires": [
+            [
+                "3496654d4f01f186"
+            ]
+        ]
+    },
+    {
+        "id": "fb536459c61f1fd2",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Prepare messages for ThingSpeak",
+        "func": "const linkMap = flow.get(\"linkMap\");\nconst API_KEY = \"removed_for_privacy\";\n\nlet smallestSource = linkMap[0][0];\nlet smallestVal = BigInt(smallestSource);\nlinkMap.forEach(tuple => {\n    const currentVal = BigInt(tuple[0]);\n    if (currentVal < smallestVal) {\n        smallestVal = currentVal;\n        smallestSource = tuple[0];\n    }\n});\n\nconst sortedLinks = linkMap\n    .filter(tuple => tuple[0] === smallestSource)\n    .sort((a, b) => {\n        const destA = BigInt(a[1]);\n        const destB = BigInt(b[1]);\n        return destA < destB ? -1 : (destA > destB ? 1 : 0);\n    });\n\nconst messages = sortedLinks.map(tuple => {\n    const cost = tuple[2];\n    return {\n        url: `https://api.thingspeak.com/update?api_key=${API_KEY}&field1=${cost}`,\n        payload: {}\n    };\n});\n\nreturn [messages];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1400,
+        "y": 1520,
+        "wires": [
+            [
+                "4e60d1ca67cd0eb2"
+            ]
+        ]
+    },
+    {
+        "id": "6d227f2f83f45fb3",
+        "type": "http request",
+        "z": "41bacab9b8390764",
+        "name": "Send GET request to ThingSpeak",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 2040,
+        "y": 1520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4e60d1ca67cd0eb2",
+        "type": "delay",
+        "z": "41bacab9b8390764",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "20",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 1700,
+        "y": 1520,
+        "wires": [
+            [
+                "6d227f2f83f45fb3"
+            ]
+        ]
+    },
+    {
+        "id": "081ff327d84ef467",
+        "type": "ui-chart",
+        "z": "41bacab9b8390764",
+        "group": "9cf579a135e0da84",
+        "name": "Plot RMS Voltage",
+        "label": "RMS Voltage chart",
+        "order": 1,
+        "chartType": "line",
+        "category": "",
+        "categoryType": "none",
+        "xAxisLabel": "",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "auto",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "RMS Voltage",
+        "yAxisProperty": "payload.dataValue",
+        "yAxisPropertyType": "msg",
+        "ymin": "",
+        "ymax": "",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "circle",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "3600",
+        "removeOlderPoints": "",
+        "colors": [
+            "#0095ff",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 2590,
+        "y": 1180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "feeb29b0f8d9bfd9",
+        "type": "function",
+        "z": "41bacab9b8390764",
+        "name": "Parse CSV row",
+        "func": "const rows = msg.payload.split('\\n');\nconst messages = [];\n\nrows.forEach((row) => {\n    const trimmedRow = row.trim();\n    const parts = trimmedRow.split(',');\n    const newMsg = {\n        payload: {\n            index: parseInt(parts[0]),\n            timestamp: parseInt(parts[1]),\n            sequenceNumber: parseInt(parts[2]),\n            attribute: parts[3],\n            status: parts[4],\n            dataType: parts[5],\n            dataValue: parseFloat(parts[6])\n        }\n    };\n\n    messages.push(newMsg);\n});\n\nreturn [messages];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1980,
+        "y": 1220,
+        "wires": [
+            [
+                "166961f175eb9478"
+            ]
+        ]
+    },
+    {
+        "id": "b8918964288e1349",
+        "type": "ui-chart",
+        "z": "41bacab9b8390764",
+        "group": "9cf579a135e0da84",
+        "name": "Plot RMS Current",
+        "label": "RMS Current chart",
+        "order": 1,
+        "chartType": "line",
+        "category": "",
+        "categoryType": "none",
+        "xAxisLabel": "",
+        "xAxisProperty": "",
+        "xAxisPropertyType": "timestamp",
+        "xAxisType": "time",
+        "xAxisFormat": "",
+        "xAxisFormatType": "auto",
+        "xmin": "",
+        "xmax": "",
+        "yAxisLabel": "RMS Current",
+        "yAxisProperty": "payload.dataValue",
+        "yAxisPropertyType": "msg",
+        "ymin": "",
+        "ymax": "",
+        "bins": 10,
+        "action": "append",
+        "stackSeries": false,
+        "pointShape": "circle",
+        "pointRadius": 4,
+        "showLegend": true,
+        "removeOlder": 1,
+        "removeOlderUnit": "3600",
+        "removeOlderPoints": "",
+        "colors": [
+            "#0095ff",
+            "#ff0000",
+            "#ff7f0e",
+            "#2ca02c",
+            "#a347e1",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "textColor": [
+            "#666666"
+        ],
+        "textColorDefault": true,
+        "gridColor": [
+            "#e5e5e5"
+        ],
+        "gridColorDefault": true,
+        "width": 6,
+        "height": 8,
+        "className": "",
+        "interpolation": "linear",
+        "x": 2590,
+        "y": 1260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e598350381174267",
+        "type": "mqtt-broker",
+        "name": "Local Mosquitto Broker",
+        "broker": "localhost",
+        "port": "1884",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "9cf579a135e0da84",
+        "type": "ui-group",
+        "name": "Group 1",
+        "page": "2fb420d48b5db015",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "2fb420d48b5db015",
+        "type": "ui-page",
+        "name": "Page 1",
+        "ui": "a5cb06a56aecb39c",
+        "path": "/page1",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "079e74c5dd8fc412",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": 0,
+                "cols": 3
+            },
+            {
+                "name": "Tablet",
+                "px": 576,
+                "cols": 6
+            },
+            {
+                "name": "Small Desktop",
+                "px": 768,
+                "cols": 9
+            },
+            {
+                "name": "Desktop",
+                "px": 1024,
+                "cols": 12
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": true,
+        "disabled": false
+    },
+    {
+        "id": "a5cb06a56aecb39c",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "page",
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
+    },
+    {
+        "id": "079e74c5dd8fc412",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "6eb140f00e2874d7",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "@flowfuse/node-red-dashboard": "1.30.2"
+        }
+    }
+]
